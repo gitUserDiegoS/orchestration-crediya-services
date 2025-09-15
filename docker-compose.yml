@@ -44,6 +44,7 @@ services:
       SPRING_DATASOURCE_USERNAME: ${CREDI_USER_DB}
       SPRING_DATASOURCE_PASSWORD: ${CREDI_PASS_DB}
       JWT_SECRET: ${JWT_SECRET}
+      SPRING_PROFILES_ACTIVE: dev
     depends_on:
       - mysql-auth
     ports:
@@ -65,6 +66,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${CREDI_PASS_DB}
       AUTH_SERVICE_URL: http://authentication-service:8080
       JWT_SECRET: ${JWT_SECRET}
+      SPRING_PROFILES_ACTIVE: dev
     depends_on:
       - mysql-loan
       - authentication-service
