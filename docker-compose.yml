@@ -1,0 +1,78 @@
+services:
+  # Authentication DB
+  mysql-auth:
+    image: mysql:8.0
+    container_name: mysql-auth
+    environment:
+      MYSQL_ROOT_PASSWORD: ${ROOT_PASSWORD}
+      MYSQL_DATABASE: authentication-db
+      MYSQL_USER: ${CREDI_USER_DB}
+      MYSQL_PASSWORD: ${CREDI_PASS_DB}
+    ports:
+      - "3307:3306"
+    volumes:
+      - ../authentication-service/db:/docker-entrypoint-initdb.d
+    networks:
+      - crediya-net
+
+  # Loan DB
+  mysql-loan:
+    image: mysql:8.0
+    container_name: mysql-loan
+    environment:
+      MYSQL_ROOT_PASSWORD: ${ROOT_PASSWORD}
+      MYSQL_DATABASE: loanapplication-db
+      MYSQL_USER: ${CREDI_USER_DB}
+      MYSQL_PASSWORD: ${CREDI_PASS_DB}
+    ports:
+      - "3308:3306"
+    volumes:
+      - ../loanapplication-service/db:/docker-entrypoint-initdb.d
+    networks:
+      - crediya-net
+
+  # Authentication service
+  authentication-service:
+    build:
+      context: ../authentication-service
+      dockerfile: deployment/Dockerfile
+    container_name: authentication-service
+    env_file:
+      - .env.dev
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-auth:3306/authentication-db
+      SPRING_DATASOURCE_USERNAME: ${CREDI_USER_DB}
+      SPRING_DATASOURCE_PASSWORD: ${CREDI_PASS_DB}
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      - mysql-auth
+    ports:
+      - "8081:8080"
+    networks:
+      - crediya-net
+
+  # Loan service
+  loanapplication-service:
+    build:
+      context: ../loanapplication-service
+      dockerfile: deployment/Dockerfile
+    container_name: loanapplication-service
+    env_file:
+      - .env.dev
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-loan:3306/loanapplication-db
+      SPRING_DATASOURCE_USERNAME: ${CREDI_USER_DB}
+      SPRING_DATASOURCE_PASSWORD: ${CREDI_PASS_DB}
+      AUTH_SERVICE_URL: http://authentication-service:8080
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      - mysql-loan
+      - authentication-service
+    ports:
+      - "8082:8080"
+    networks:
+      - crediya-net
+
+networks:
+  crediya-net:
+    driver: bridge
